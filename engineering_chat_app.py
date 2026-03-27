@@ -2,38 +2,92 @@ import streamlit as st
 import sympy as sp
 import pint
 import re
+from PyPDF2 import PdfReader
+from streamlit_mic_recorder import mic_recorder
 
 # Setup
 ureg = pint.UnitRegistry()
 
 st.set_page_config(
-    page_title="EngiCore Super App",
+    page_title="EngiCore Platform",
     layout="wide"
 )
 
-st.title("🧠 EngiCore Super App")
+# Branding
+st.markdown("""
+# 🧠 EngiCore
+### Engineering Super Platform
+---
+""")
 
-# Sidebar Menu
-menu = st.sidebar.selectbox(
-    "Select Module",
+# Navigation Bar
+menu = st.sidebar.radio(
+    "Navigation",
     [
-        "Smart Assistant",
-        "Calculator",
-        "Converter",
-        "Document Tools",
-        "Engineering Tools"
+        "🏠 Home",
+        "🧠 Smart Assistant",
+        "🧮 Calculator",
+        "🔄 Converter",
+        "📄 Document Tools",
+        "⚙️ Engineering Tools"
     ]
 )
 
-# -----------------------
-# SMART ASSISTANT
-# -----------------------
+# -----------------------------
+# HOME PAGE
+# -----------------------------
 
-if menu == "Smart Assistant":
+if menu == "🏠 Home":
+
+    st.header("Welcome to EngiCore")
+
+    st.write("All-in-One Engineering Platform")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.success("🧠 Smart Assistant")
+        st.write("Ask engineering questions")
+
+    with col2:
+        st.success("🧮 Calculator")
+        st.write("Scientific & engineering calculator")
+
+    with col3:
+        st.success("🔄 Converter")
+        st.write("Universal unit converter")
+
+    st.markdown("---")
+
+    col4, col5, col6 = st.columns(3)
+
+    with col4:
+        st.success("📄 Document Tools")
+
+    with col5:
+        st.success("⚙️ Engineering Tools")
+
+    with col6:
+        st.success("🤖 AI Assistant")
+
+
+# -----------------------------
+# SMART ASSISTANT
+# -----------------------------
+
+elif menu == "🧠 Smart Assistant":
 
     st.header("Smart Assistant")
 
     query = st.text_input("Ask anything")
+
+    audio = mic_recorder(
+        start_prompt="🎤 Start Recording",
+        stop_prompt="Stop Recording"
+    )
+
+    if audio:
+        st.info("Voice captured")
 
     if st.button("Solve"):
 
@@ -44,11 +98,11 @@ if menu == "Smart Assistant":
             st.info("Try math or engineering question")
 
 
-# -----------------------
+# -----------------------------
 # CALCULATOR
-# -----------------------
+# -----------------------------
 
-elif menu == "Calculator":
+elif menu == "🧮 Calculator":
 
     st.header("Calculator")
 
@@ -75,11 +129,11 @@ elif menu == "Calculator":
             st.success(num1 / num2)
 
 
-# -----------------------
+# -----------------------------
 # CONVERTER
-# -----------------------
+# -----------------------------
 
-elif menu == "Converter":
+elif menu == "🔄 Converter":
 
     st.header("Unit Converter")
 
@@ -94,22 +148,26 @@ elif menu == "Converter":
         st.success(result)
 
 
-# -----------------------
+# -----------------------------
 # DOCUMENT TOOLS
-# -----------------------
+# -----------------------------
 
-elif menu == "Document Tools":
+elif menu == "📄 Document Tools":
 
     st.header("Document Tools")
 
-    st.info("PDF tools coming next update")
+    pdf = st.file_uploader("Upload PDF", type=["pdf"])
+
+    if pdf:
+        reader = PdfReader(pdf)
+        st.success(f"Pages: {len(reader.pages)}")
 
 
-# -----------------------
+# -----------------------------
 # ENGINEERING TOOLS
-# -----------------------
+# -----------------------------
 
-elif menu == "Engineering Tools":
+elif menu == "⚙️ Engineering Tools":
 
     st.header("Engineering Tools")
 
@@ -117,7 +175,9 @@ elif menu == "Engineering Tools":
         "Select Tool",
         [
             "Tank Volume",
-            "Pipe Velocity"
+            "Pipe Velocity",
+            "Pump Power",
+            "Reynolds Number"
         ]
     )
 
@@ -136,6 +196,34 @@ elif menu == "Engineering Tools":
         dia = st.number_input("Diameter (mm)")
 
         if st.button("Calculate Velocity"):
-
             velocity = flow/(3.14*(dia/1000)**2/4)/3600
             st.success(velocity)
+
+    elif tool == "Pump Power":
+
+        flow = st.number_input("Flow")
+        head = st.number_input("Head")
+        eff = st.number_input("Efficiency")
+
+        if st.button("Calculate Power"):
+            power = (flow * head * 9.81) / (367 * (eff/100))
+            st.success(power)
+
+    elif tool == "Reynolds Number":
+
+        density = st.number_input("Density")
+        velocity = st.number_input("Velocity")
+        diameter = st.number_input("Diameter")
+        viscosity = st.number_input("Viscosity")
+
+        if st.button("Calculate Reynolds"):
+            re = (density * velocity * diameter) / viscosity
+            st.success(re)
+
+
+# Footer
+st.markdown("""
+---
+### EngiCore Engineering Platform  
+Built for Students • Engineers • Professionals
+""")
