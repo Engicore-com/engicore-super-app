@@ -1,0 +1,9 @@
+streamlit
+sympy
+pint
+speechrecognition
+streamlit-mic-recorder
+PyPDF2
+pdfplumber
+wikipedia
+reportlab
