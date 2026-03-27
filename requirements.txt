@@ -1,9 +1,11 @@
 streamlit
-sympy
-pint
-pandas
 numpy
+pandas
 matplotlib
-wikipedia
-PyPDF2
 reportlab
+pint
+PyPDF2
+pillow
+python-docx
+streamlit-drawable-canvas
+networkx
