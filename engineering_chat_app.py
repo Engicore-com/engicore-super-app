@@ -13,14 +13,60 @@ st.set_page_config(
     layout="wide"
 )
 
-# Branding
+# -------------------------
+# DARK MODE TOGGLE
+# -------------------------
+
+dark_mode = st.sidebar.toggle("🌙 Dark Mode")
+
+if dark_mode:
+    st.markdown("""
+    <style>
+    body {
+        background-color: #0E1117;
+        color: white;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# -------------------------
+# MULTI LANGUAGE
+# -------------------------
+
+language = st.sidebar.selectbox(
+    "🌍 Language",
+    ["English", "Hindi"]
+)
+
+def translate(text):
+
+    hindi = {
+        "Home":"होम",
+        "Calculator":"कैलकुलेटर",
+        "Converter":"कन्वर्टर",
+        "Engineering Tools":"इंजीनियरिंग टूल्स"
+    }
+
+    if language == "Hindi":
+        return hindi.get(text,text)
+
+    return text
+
+
+# -------------------------
+# LOGO + BRANDING
+# -------------------------
+
 st.markdown("""
 # 🧠 EngiCore
 ### Engineering Super Platform
 ---
 """)
 
-# Navigation Bar
+# -------------------------
+# NAVIGATION
+# -------------------------
+
 menu = st.sidebar.radio(
     "Navigation",
     [
@@ -33,47 +79,28 @@ menu = st.sidebar.radio(
     ]
 )
 
-# -----------------------------
-# HOME PAGE
-# -----------------------------
+# -------------------------
+# HOME
+# -------------------------
 
 if menu == "🏠 Home":
 
     st.header("Welcome to EngiCore")
 
-    st.write("All-in-One Engineering Platform")
-
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.success("🧠 Smart Assistant")
-        st.write("Ask engineering questions")
+        st.success("Smart Assistant")
 
     with col2:
-        st.success("🧮 Calculator")
-        st.write("Scientific & engineering calculator")
+        st.success("Calculator")
 
     with col3:
-        st.success("🔄 Converter")
-        st.write("Universal unit converter")
+        st.success("Converter")
 
-    st.markdown("---")
-
-    col4, col5, col6 = st.columns(3)
-
-    with col4:
-        st.success("📄 Document Tools")
-
-    with col5:
-        st.success("⚙️ Engineering Tools")
-
-    with col6:
-        st.success("🤖 AI Assistant")
-
-
-# -----------------------------
+# -------------------------
 # SMART ASSISTANT
-# -----------------------------
+# -------------------------
 
 elif menu == "🧠 Smart Assistant":
 
@@ -82,8 +109,8 @@ elif menu == "🧠 Smart Assistant":
     query = st.text_input("Ask anything")
 
     audio = mic_recorder(
-        start_prompt="🎤 Start Recording",
-        stop_prompt="Stop Recording"
+        start_prompt="🎤 Start",
+        stop_prompt="Stop"
     )
 
     if audio:
@@ -98,9 +125,9 @@ elif menu == "🧠 Smart Assistant":
             st.info("Try math or engineering question")
 
 
-# -----------------------------
+# -------------------------
 # CALCULATOR
-# -----------------------------
+# -------------------------
 
 elif menu == "🧮 Calculator":
 
@@ -128,14 +155,13 @@ elif menu == "🧮 Calculator":
         elif operation == "Divide":
             st.success(num1 / num2)
 
-
-# -----------------------------
+# -------------------------
 # CONVERTER
-# -----------------------------
+# -------------------------
 
 elif menu == "🔄 Converter":
 
-    st.header("Unit Converter")
+    st.header("Converter")
 
     value = st.number_input("Value", 1.0)
 
@@ -147,10 +173,9 @@ elif menu == "🔄 Converter":
         result = (value * ureg(from_unit)).to(to_unit)
         st.success(result)
 
-
-# -----------------------------
-# DOCUMENT TOOLS
-# -----------------------------
+# -------------------------
+# DOCUMENT
+# -------------------------
 
 elif menu == "📄 Document Tools":
 
@@ -163,9 +188,9 @@ elif menu == "📄 Document Tools":
         st.success(f"Pages: {len(reader.pages)}")
 
 
-# -----------------------------
+# -------------------------
 # ENGINEERING TOOLS
-# -----------------------------
+# -------------------------
 
 elif menu == "⚙️ Engineering Tools":
 
@@ -176,54 +201,25 @@ elif menu == "⚙️ Engineering Tools":
         [
             "Tank Volume",
             "Pipe Velocity",
-            "Pump Power",
-            "Reynolds Number"
+            "Pump Power"
         ]
     )
 
     if tool == "Tank Volume":
 
-        dia = st.number_input("Diameter (m)")
-        height = st.number_input("Height (m)")
+        dia = st.number_input("Diameter")
+        height = st.number_input("Height")
 
-        if st.button("Calculate Volume"):
+        if st.button("Calculate"):
             volume = 3.14 * (dia/2)**2 * height
             st.success(volume)
 
-    elif tool == "Pipe Velocity":
+# -------------------------
+# FOOTER
+# -------------------------
 
-        flow = st.number_input("Flow (m3/hr)")
-        dia = st.number_input("Diameter (mm)")
-
-        if st.button("Calculate Velocity"):
-            velocity = flow/(3.14*(dia/1000)**2/4)/3600
-            st.success(velocity)
-
-    elif tool == "Pump Power":
-
-        flow = st.number_input("Flow")
-        head = st.number_input("Head")
-        eff = st.number_input("Efficiency")
-
-        if st.button("Calculate Power"):
-            power = (flow * head * 9.81) / (367 * (eff/100))
-            st.success(power)
-
-    elif tool == "Reynolds Number":
-
-        density = st.number_input("Density")
-        velocity = st.number_input("Velocity")
-        diameter = st.number_input("Diameter")
-        viscosity = st.number_input("Viscosity")
-
-        if st.button("Calculate Reynolds"):
-            re = (density * velocity * diameter) / viscosity
-            st.success(re)
-
-
-# Footer
 st.markdown("""
 ---
-### EngiCore Engineering Platform  
-Built for Students • Engineers • Professionals
+### EngiCore Platform  
+Made for Students • Engineers • Professionals
 """)
