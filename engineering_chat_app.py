@@ -1,262 +1,208 @@
 import streamlit as st
-import sympy as sp
-import pint
-import re
-import pandas as pd
-import matplotlib.pyplot as plt
+import json
+import os
+import math
 import numpy as np
-import wikipedia
-from PyPDF2 import PdfReader
+import pandas as pd
 from reportlab.pdfgen import canvas
 
-# Setup
-ureg = pint.UnitRegistry()
-
 st.set_page_config(
-    page_title="EngiCore Platform",
+    page_title="EngiCore",
+    page_icon="⚙️",
     layout="wide"
 )
 
-# -----------------------------
-# HEADER
-# -----------------------------
+# Header
+st.title("⚙️ EngiCore Professional Engineering Platform")
 
-st.title("🧠 EngiCore Engineering Platform")
-st.markdown("---")
+menu = st.sidebar.selectbox(
+    "Select Module",
+    [
+        "Dashboard",
+        "Engineering Tools",
+        "Plant Simulator",
+        "Save Project",
+        "Export PFD PDF",
+        "Team Collaboration",
+        "AI Auto Design",
+        "Cloud Deployment"
+    ]
+)
 
-# -----------------------------
-# MODULE BUTTONS
-# -----------------------------
+# Dashboard
+if menu == "Dashboard":
 
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+    st.header("🚀 EngiCore Dashboard")
 
-with col1:
-    home = st.button("🏠 Home")
+    col1, col2, col3 = st.columns(3)
 
-with col2:
-    smart = st.button("🧠 Smart Assistant")
+    col1.metric("Tools", "50+")
+    col2.metric("Version", "Professional")
+    col3.metric("Mode", "Offline + Online")
 
-with col3:
-    calc = st.button("🧮 Calculator")
+# Engineering Tools
+elif menu == "Engineering Tools":
 
-with col4:
-    convert = st.button("🔄 Converter")
+    st.header("📐 Engineering Calculations")
 
-with col5:
-    docs = st.button("📄 Docs")
-
-with col6:
-    eng = st.button("⚙️ Engineering")
-
-
-# -----------------------------
-# HOME
-# -----------------------------
-
-if home:
-
-    st.header("Welcome to EngiCore")
-
-    st.write("All in One Engineering Platform")
-
-# -----------------------------
-# SMART ASSISTANT
-# -----------------------------
-
-if smart:
-
-    st.header("Smart Assistant")
-
-    query = st.text_input("Ask anything")
-
-    def smart_engine(q):
-
-        # Math
-        try:
-            return sp.sympify(q)
-        except:
-            pass
-
-        # Unit conversion
-        try:
-            pattern = r'(\d+\.?\d*)\s*(\w+)\s*(to)\s*(\w+)'
-            match = re.search(pattern, q)
-
-            if match:
-                value = float(match.group(1))
-                from_unit = match.group(2)
-                to_unit = match.group(4)
-
-                return (value * ureg(from_unit)).to(to_unit)
-
-        except:
-            pass
-
-        # Wikipedia
-        try:
-            return wikipedia.summary(q, sentences=2)
-        except:
-            pass
-
-        return "Try math, engineering or unit conversion"
-
-    if st.button("Ask"):
-        result = smart_engine(query)
-        st.success(result)
-
-
-# -----------------------------
-# CALCULATOR
-# -----------------------------
-
-if calc:
-
-    st.header("Calculator")
-
-    num1 = st.number_input("Number 1")
-    num2 = st.number_input("Number 2")
-
-    op = st.selectbox(
-        "Operation",
-        ["Add","Subtract","Multiply","Divide"]
-    )
-
-    if st.button("Calculate"):
-
-        if op == "Add":
-            st.success(num1 + num2)
-
-        elif op == "Subtract":
-            st.success(num1 - num2)
-
-        elif op == "Multiply":
-            st.success(num1 * num2)
-
-        elif op == "Divide":
-            st.success(num1 / num2)
-
-# -----------------------------
-# CONVERTER
-# -----------------------------
-
-if convert:
-
-    st.header("Converter")
-
-    value = st.number_input("Value",1.0)
-    from_unit = st.text_input("From")
-    to_unit = st.text_input("To")
-
-    if st.button("Convert"):
-        result = (value * ureg(from_unit)).to(to_unit)
-        st.success(result)
-
-# -----------------------------
-# DOCUMENT
-# -----------------------------
-
-if docs:
-
-    st.header("Document Tools")
-
-    pdf = st.file_uploader("Upload PDF", type=["pdf"])
-
-    if pdf:
-        reader = PdfReader(pdf)
-        st.success(f"Pages: {len(reader.pages)}")
-
-# -----------------------------
-# ENGINEERING
-# -----------------------------
-
-if eng:
-
-    st.header("Engineering Tools")
-
-    tool = st.selectbox(
-        "Select Tool",
+    calc = st.selectbox(
+        "Select Calculation",
         [
-        "Pump Curve",
-        "Pipe Sizing",
-        "Fluid Database",
-        "Plant Simulation",
-        "Engineering Report"
+            "Pipe Sizing",
+            "Pump Power",
+            "Heat Duty"
         ]
     )
 
-# Pump Curve
+    if calc == "Pipe Sizing":
 
-    if tool == "Pump Curve":
-
-        flow = np.linspace(0,100,50)
-        head = 50 - 0.01*(flow**2)
-
-        fig, ax = plt.subplots()
-        ax.plot(flow,head)
-
-        st.pyplot(fig)
-
-# Pipe Sizing
-
-    elif tool == "Pipe Sizing":
-
-        flow = st.number_input("Flow")
-        velocity = st.number_input("Velocity")
+        flow = st.number_input("Flow (m3/s)")
+        velocity = st.number_input("Velocity (m/s)")
 
         if st.button("Calculate"):
 
-            area = flow/(velocity*3600)
-            dia = ((4*area)/3.14)**0.5
+            diameter = (4*flow/(3.14*velocity))**0.5
 
-            st.success(dia*1000)
+            st.success(f"Pipe Diameter = {diameter:.3f} m")
 
-# Fluid Database
+    elif calc == "Pump Power":
 
-    elif tool == "Fluid Database":
+        flow = st.number_input("Flow rate")
+        head = st.number_input("Head")
 
-        fluids = {
-            "Water":{"Density":1000},
-            "Oil":{"Density":850},
-            "Air":{"Density":1.2}
+        if st.button("Calculate Pump"):
+
+            power = flow*head/367
+
+            st.success(f"Power = {power:.2f} kW")
+
+# Plant Simulator
+elif menu == "Plant Simulator":
+
+    st.header("🏭 Plant Simulator")
+
+    flow = st.number_input("Flow")
+    temp = st.number_input("Temperature")
+    pressure = st.number_input("Pressure")
+
+    if st.button("Run Simulation"):
+
+        new_temp = temp + 5
+        new_pressure = pressure - 1
+
+        st.success("Simulation Complete")
+
+        st.write(f"Outlet Temp = {new_temp}")
+        st.write(f"Outlet Pressure = {new_pressure}")
+
+# Save Project
+elif menu == "Save Project":
+
+    st.header("💾 Save Project")
+
+    project = st.text_input("Project Name")
+
+    flow = st.number_input("Flow")
+    pressure = st.number_input("Pressure")
+    temp = st.number_input("Temperature")
+
+    if st.button("Save"):
+
+        os.makedirs("projects", exist_ok=True)
+
+        data = {
+            "flow": flow,
+            "pressure": pressure,
+            "temp": temp
         }
 
-        fluid = st.selectbox("Fluid",fluids.keys())
+        with open(f"projects/{project}.json","w") as f:
+            json.dump(data,f)
 
-        st.write(fluids[fluid])
+        st.success("Project Saved")
 
-# Plant Simulation
+    if st.button("Load"):
 
-    elif tool == "Plant Simulation":
+        try:
+            with open(f"projects/{project}.json") as f:
+                data=json.load(f)
 
-        eq = st.multiselect(
-            "Equipment",
-            ["Pump","Tank","Pipe"]
-        )
+            st.write(data)
 
-        for e in eq:
-            st.success(f"{e} added")
+        except:
+            st.error("Project not found")
 
-# Report
+# Export PDF
+elif menu == "Export PFD PDF":
 
-    elif tool == "Engineering Report":
+    st.header("📄 Export PFD")
 
-        project = st.text_input("Project")
+    name = st.text_input("File Name")
 
-        if st.button("Generate"):
+    if st.button("Export"):
 
-            c = canvas.Canvas("report.pdf")
+        c = canvas.Canvas(f"{name}.pdf")
 
-            c.drawString(100,750,"EngiCore Report")
-            c.drawString(100,720,project)
+        c.drawString(100,750,"EngiCore PFD")
+        c.drawString(100,700,"Tank → Pump → Heat Exchanger")
 
-            c.save()
+        c.save()
 
-            st.success("Report Generated")
+        st.success("PDF Exported")
 
+# Team Collaboration
+elif menu == "Team Collaboration":
 
-# -----------------------------
-# FOOTER
-# -----------------------------
+    st.header("👥 Team Chat")
 
-st.markdown("---")
-st.write("EngiCore Engineering Platform")
+    user = st.text_input("User")
+
+    msg = st.text_input("Message")
+
+    if st.button("Send"):
+
+        st.write(f"{user}: {msg}")
+
+# AI Auto Design
+elif menu == "AI Auto Design":
+
+    st.header("🤖 AI Plant Design")
+
+    plant = st.selectbox(
+        "Plant Type",
+        [
+            "Cooling Water",
+            "Steam System",
+            "Pump System"
+        ]
+    )
+
+    if st.button("Generate"):
+
+        if plant == "Cooling Water":
+
+            st.success("Generated Design")
+            st.write("Cooling Tower → Pump → Users")
+
+        elif plant == "Steam System":
+
+            st.success("Generated Design")
+            st.write("Boiler → Steam Header → Users")
+
+        elif plant == "Pump System":
+
+            st.success("Generated Design")
+            st.write("Tank → Pump → Pipeline")
+
+# Cloud Deployment
+elif menu == "Cloud Deployment":
+
+    st.header("☁️ Cloud Deployment")
+
+    st.write("Deploy using:")
+
+    st.write("• Streamlit Cloud")
+    st.write("• AWS")
+    st.write("• Azure")
+
+    st.info("Upload project to GitHub then deploy")
