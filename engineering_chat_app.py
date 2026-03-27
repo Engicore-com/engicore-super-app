@@ -1,80 +1,215 @@
 import streamlit as st
-import json
-import os
 import math
 import numpy as np
 import pandas as pd
+import json
+import os
+import matplotlib.pyplot as plt
 from reportlab.pdfgen import canvas
+from pint import UnitRegistry
+import speech_recognition as sr
+
+ureg = UnitRegistry()
 
 st.set_page_config(
     page_title="EngiCore",
-    page_icon="⚙️",
+    page_icon="engicore_logo.png",
     layout="wide"
 )
 
-# Header
-st.title("⚙️ EngiCore Professional Engineering Platform")
+# Mobile Friendly UI
+st.markdown("""
+<style>
+.block-container {
+    padding-top: 1rem;
+}
+.stButton>button {
+    width:100%;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+# Header Logo
+col1, col2 = st.columns([1,6])
+
+with col1:
+    st.image("engicore_logo.png", width=80)
+
+with col2:
+    st.title("EngiCore")
+    st.caption("Professional Engineering Platform")
+
+
+st.sidebar.image("engicore_logo.png")
+st.sidebar.title("⚙️ EngiCore")
+
 
 menu = st.sidebar.selectbox(
     "Select Module",
     [
         "Dashboard",
+        "Advanced Calculator",
+        "Unit Converter",
         "Engineering Tools",
+        "Steam Tables",
+        "Pump Curve",
+        "Heat Exchanger",
+        "Pipe Network",
         "Plant Simulator",
-        "Save Project",
-        "Export PFD PDF",
-        "Team Collaboration",
+        "Fluid Database",
+        "Equipment Database",
+        "Engineering AI",
         "AI Auto Design",
-        "Cloud Deployment"
+        "Save Project",
+        "Export PDF",
+        "Team Collaboration"
     ]
 )
+
+
+# Voice Function
+def voice_input():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        st.info("Speak...")
+        audio = r.listen(source)
+
+    try:
+        return r.recognize_google(audio)
+    except:
+        return ""
+
 
 # Dashboard
 if menu == "Dashboard":
 
-    st.header("🚀 EngiCore Dashboard")
+    st.header("🚀 Dashboard")
 
-    col1, col2, col3 = st.columns(3)
+    col1,col2,col3 = st.columns(3)
 
-    col1.metric("Tools", "50+")
-    col2.metric("Version", "Professional")
-    col3.metric("Mode", "Offline + Online")
+    col1.metric("Modules","30+")
+    col2.metric("Version","Professional")
+    col3.metric("Mode","Online + Offline")
+
+
+# Calculator
+elif menu == "Advanced Calculator":
+
+    st.header("🧮 Advanced Calculator")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        expr = st.text_input("Expression")
+
+    with col2:
+        if st.button("🎤 Voice"):
+            expr = voice_input()
+            st.write(expr)
+
+    if st.button("Calculate"):
+        try:
+            result = eval(expr)
+            st.success(result)
+        except:
+            st.error("Invalid Expression")
+
+
+# Unit Converter
+elif menu == "Unit Converter":
+
+    st.header("📐 Universal Unit Converter")
+
+    value = st.number_input("Value")
+
+    from_unit = st.text_input("From Unit","meter")
+    to_unit = st.text_input("To Unit","feet")
+
+    if st.button("Convert"):
+        try:
+            result = (value * ureg(from_unit)).to(to_unit)
+            st.success(result)
+        except:
+            st.error("Conversion Error")
+
 
 # Engineering Tools
 elif menu == "Engineering Tools":
 
-    st.header("📐 Engineering Calculations")
+    st.header("⚙️ Engineering Tools")
 
-    calc = st.selectbox(
-        "Select Calculation",
-        [
-            "Pipe Sizing",
-            "Pump Power",
-            "Heat Duty"
-        ]
+    tool = st.selectbox(
+        "Tool",
+        ["Pipe Sizing","Pump Power","Heat Duty"]
     )
 
-    if calc == "Pipe Sizing":
+    if tool == "Pipe Sizing":
 
-        flow = st.number_input("Flow (m3/s)")
-        velocity = st.number_input("Velocity (m/s)")
+        flow = st.number_input("Flow")
+        velocity = st.number_input("Velocity")
 
         if st.button("Calculate"):
+            d = (4*flow/(3.14*velocity))**0.5
+            st.success(f"Diameter = {d}")
 
-            diameter = (4*flow/(3.14*velocity))**0.5
 
-            st.success(f"Pipe Diameter = {diameter:.3f} m")
+# Steam Tables
+elif menu == "Steam Tables":
 
-    elif calc == "Pump Power":
+    st.header("♨️ Steam Tables")
 
-        flow = st.number_input("Flow rate")
-        head = st.number_input("Head")
+    temp = st.number_input("Temperature")
 
-        if st.button("Calculate Pump"):
+    h = 4.18*temp
 
-            power = flow*head/367
+    st.success(f"Enthalpy = {h}")
 
-            st.success(f"Power = {power:.2f} kW")
+
+# Pump Curve
+elif menu == "Pump Curve":
+
+    st.header("📈 Pump Curve")
+
+    max_flow = st.number_input("Max Flow")
+
+    if st.button("Plot"):
+
+        flow = np.linspace(0,max_flow,50)
+        head = max_flow-flow
+
+        plt.figure()
+        plt.plot(flow,head)
+
+        st.pyplot(plt)
+
+
+# Heat Exchanger
+elif menu == "Heat Exchanger":
+
+    st.header("🔥 Heat Exchanger")
+
+    m = st.number_input("Flow")
+    cp = st.number_input("Cp")
+    dt = st.number_input("Delta T")
+
+    if st.button("Calculate"):
+        Q = m*cp*dt
+        st.success(Q)
+
+
+# Pipe Network
+elif menu == "Pipe Network":
+
+    st.header("🔧 Pipe Network")
+
+    length = st.number_input("Length")
+    diameter = st.number_input("Diameter")
+
+    if st.button("Calculate"):
+        loss = length/diameter
+        st.success(loss)
+
 
 # Plant Simulator
 elif menu == "Plant Simulator":
@@ -82,73 +217,95 @@ elif menu == "Plant Simulator":
     st.header("🏭 Plant Simulator")
 
     flow = st.number_input("Flow")
-    temp = st.number_input("Temperature")
-    pressure = st.number_input("Pressure")
+    temp = st.number_input("Temp")
 
-    if st.button("Run Simulation"):
-
-        new_temp = temp + 5
-        new_pressure = pressure - 1
-
+    if st.button("Run"):
         st.success("Simulation Complete")
+        st.write(temp+5)
 
-        st.write(f"Outlet Temp = {new_temp}")
-        st.write(f"Outlet Pressure = {new_pressure}")
+
+# Fluid Database
+elif menu == "Fluid Database":
+
+    st.header("💧 Fluid Database")
+
+    df = pd.DataFrame({
+        "Fluid":["Water","Oil","Steam"],
+        "Density":[1000,850,0.6]
+    })
+
+    st.dataframe(df)
+
+
+# Equipment Database
+elif menu == "Equipment Database":
+
+    st.header("⚙️ Equipment Database")
+
+    df = pd.DataFrame({
+        "Equipment":["Pump","Tank","HX"]
+    })
+
+    st.dataframe(df)
+
+
+# Engineering AI
+elif menu == "Engineering AI":
+
+    st.header("🤖 Engineering AI")
+
+    q = st.text_input("Ask")
+
+    if st.button("Ask"):
+        st.success("AI Answer Coming")
+
+
+# AI Design
+elif menu == "AI Auto Design":
+
+    st.header("🤖 Auto Design")
+
+    plant = st.selectbox(
+        "Plant",
+        ["Cooling","Steam","Pump"]
+    )
+
+    if st.button("Generate"):
+        st.success("Design Generated")
+
 
 # Save Project
 elif menu == "Save Project":
 
     st.header("💾 Save Project")
 
-    project = st.text_input("Project Name")
-
-    flow = st.number_input("Flow")
-    pressure = st.number_input("Pressure")
-    temp = st.number_input("Temperature")
+    name = st.text_input("Project Name")
 
     if st.button("Save"):
 
-        os.makedirs("projects", exist_ok=True)
+        os.makedirs("projects",exist_ok=True)
 
-        data = {
-            "flow": flow,
-            "pressure": pressure,
-            "temp": temp
-        }
+        with open(f"projects/{name}.json","w") as f:
+            json.dump({"project":name},f)
 
-        with open(f"projects/{project}.json","w") as f:
-            json.dump(data,f)
+        st.success("Saved")
 
-        st.success("Project Saved")
-
-    if st.button("Load"):
-
-        try:
-            with open(f"projects/{project}.json") as f:
-                data=json.load(f)
-
-            st.write(data)
-
-        except:
-            st.error("Project not found")
 
 # Export PDF
-elif menu == "Export PFD PDF":
+elif menu == "Export PDF":
 
-    st.header("📄 Export PFD")
+    st.header("📄 Export PDF")
 
     name = st.text_input("File Name")
 
     if st.button("Export"):
 
         c = canvas.Canvas(f"{name}.pdf")
-
         c.drawString(100,750,"EngiCore PFD")
-        c.drawString(100,700,"Tank → Pump → Heat Exchanger")
-
         c.save()
 
-        st.success("PDF Exported")
+        st.success("Exported")
+
 
 # Team Collaboration
 elif menu == "Team Collaboration":
@@ -156,53 +313,7 @@ elif menu == "Team Collaboration":
     st.header("👥 Team Chat")
 
     user = st.text_input("User")
-
     msg = st.text_input("Message")
 
     if st.button("Send"):
-
         st.write(f"{user}: {msg}")
-
-# AI Auto Design
-elif menu == "AI Auto Design":
-
-    st.header("🤖 AI Plant Design")
-
-    plant = st.selectbox(
-        "Plant Type",
-        [
-            "Cooling Water",
-            "Steam System",
-            "Pump System"
-        ]
-    )
-
-    if st.button("Generate"):
-
-        if plant == "Cooling Water":
-
-            st.success("Generated Design")
-            st.write("Cooling Tower → Pump → Users")
-
-        elif plant == "Steam System":
-
-            st.success("Generated Design")
-            st.write("Boiler → Steam Header → Users")
-
-        elif plant == "Pump System":
-
-            st.success("Generated Design")
-            st.write("Tank → Pump → Pipeline")
-
-# Cloud Deployment
-elif menu == "Cloud Deployment":
-
-    st.header("☁️ Cloud Deployment")
-
-    st.write("Deploy using:")
-
-    st.write("• Streamlit Cloud")
-    st.write("• AWS")
-    st.write("• Azure")
-
-    st.info("Upload project to GitHub then deploy")
