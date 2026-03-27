@@ -8,41 +8,57 @@ import matplotlib.pyplot as plt
 from reportlab.pdfgen import canvas
 from pint import UnitRegistry
 import speech_recognition as sr
+import base64
+from io import BytesIO
+from PIL import Image
 
 ureg = UnitRegistry()
 
+# Embedded Logo
+def get_logo():
+    logo_base64 = """
+iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAA... (shortened placeholder)
+"""
+    logo_bytes = base64.b64decode(logo_base64)
+    return Image.open(BytesIO(logo_bytes))
+
+
 st.set_page_config(
     page_title="EngiCore",
-    page_icon="engicore_logo.png",
     layout="wide"
 )
 
-# Mobile Friendly UI
+# Mobile UI
 st.markdown("""
 <style>
 .block-container {
-    padding-top: 1rem;
+padding-top:1rem;
 }
-.stButton>button {
-    width:100%;
+.stButton>button{
+width:100%;
 }
 </style>
 """, unsafe_allow_html=True)
 
 
-# Header Logo
+# Header
 col1, col2 = st.columns([1,6])
 
 with col1:
-    st.image("engicore_logo.png", width=80)
+    try:
+        st.image(get_logo(), width=80)
+    except:
+        st.write("⚙️")
 
 with col2:
     st.title("EngiCore")
     st.caption("Professional Engineering Platform")
 
-
-st.sidebar.image("engicore_logo.png")
-st.sidebar.title("⚙️ EngiCore")
+# Sidebar
+try:
+    st.sidebar.image(get_logo(), width=120)
+except:
+    st.sidebar.title("⚙️ EngiCore")
 
 
 menu = st.sidebar.selectbox(
@@ -67,8 +83,7 @@ menu = st.sidebar.selectbox(
     ]
 )
 
-
-# Voice Function
+# Voice
 def voice_input():
     r = sr.Recognizer()
     with sr.Microphone() as source:
@@ -98,7 +113,7 @@ elif menu == "Advanced Calculator":
 
     st.header("🧮 Advanced Calculator")
 
-    col1, col2 = st.columns(2)
+    col1,col2 = st.columns(2)
 
     with col1:
         expr = st.text_input("Expression")
@@ -113,7 +128,7 @@ elif menu == "Advanced Calculator":
             result = eval(expr)
             st.success(result)
         except:
-            st.error("Invalid Expression")
+            st.error("Invalid")
 
 
 # Unit Converter
@@ -151,7 +166,7 @@ elif menu == "Engineering Tools":
 
         if st.button("Calculate"):
             d = (4*flow/(3.14*velocity))**0.5
-            st.success(f"Diameter = {d}")
+            st.success(d)
 
 
 # Steam Tables
@@ -163,7 +178,7 @@ elif menu == "Steam Tables":
 
     h = 4.18*temp
 
-    st.success(f"Enthalpy = {h}")
+    st.success(f"Enthalpy {h}")
 
 
 # Pump Curve
@@ -194,6 +209,7 @@ elif menu == "Heat Exchanger":
     dt = st.number_input("Delta T")
 
     if st.button("Calculate"):
+
         Q = m*cp*dt
         st.success(Q)
 
@@ -207,6 +223,7 @@ elif menu == "Pipe Network":
     diameter = st.number_input("Diameter")
 
     if st.button("Calculate"):
+
         loss = length/diameter
         st.success(loss)
 
@@ -220,6 +237,7 @@ elif menu == "Plant Simulator":
     temp = st.number_input("Temp")
 
     if st.button("Run"):
+
         st.success("Simulation Complete")
         st.write(temp+5)
 
@@ -260,7 +278,7 @@ elif menu == "Engineering AI":
         st.success("AI Answer Coming")
 
 
-# AI Design
+# AI Auto Design
 elif menu == "AI Auto Design":
 
     st.header("🤖 Auto Design")
@@ -307,7 +325,7 @@ elif menu == "Export PDF":
         st.success("Exported")
 
 
-# Team Collaboration
+# Team Chat
 elif menu == "Team Collaboration":
 
     st.header("👥 Team Chat")
