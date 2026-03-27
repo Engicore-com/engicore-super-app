@@ -7,9 +7,13 @@ import os
 from reportlab.pdfgen import canvas
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PIL import Image
-from streamlit_drawable_canvas import st_canvas
 from pint import UnitRegistry
-import networkx as nx
+
+try:
+    from streamlit_drawable_canvas import st_canvas
+    canvas_available = True
+except:
+    canvas_available = False
 
 ureg = UnitRegistry()
 
@@ -17,35 +21,37 @@ st.set_page_config(layout="wide")
 
 st.title("⚙️ EngiCore Enterprise Engineering Platform")
 
-# Menu
-menu = st.sidebar.selectbox(
-    "EngiCore",
-    [
-        "Dashboard",
-        "Advanced Calculator",
-        "Unit Converter",
-        "Industrial Calculators",
-        "Engineering Database",
-        "Engineering Standards",
-        "Plant Builder",
-        "Equipment Sizing AI",
-        "PDF Tools (iLovePDF Clone)",
-        "Save Project"
-    ]
-)
+# Sidebar buttons
 
-# Dashboard
-if menu == "Dashboard":
+st.sidebar.title("⚙️ EngiCore")
 
-    col1,col2,col3 = st.columns(3)
+if "page" not in st.session_state:
+    st.session_state.page = "calc"
 
-    col1.metric("Modules","60+")
-    col2.metric("Version","Enterprise")
-    col3.metric("Platform","Industrial Suite")
+if st.sidebar.button("🧮 Advanced Calculator"):
+    st.session_state.page = "calc"
+
+if st.sidebar.button("📐 Unit Converter"):
+    st.session_state.page = "unit"
+
+if st.sidebar.button("🏭 Industrial Calculators"):
+    st.session_state.page = "industrial"
+
+if st.sidebar.button("🏭 Plant Builder"):
+    st.session_state.page = "plant"
+
+if st.sidebar.button("📄 Doc Converter"):
+    st.session_state.page = "doc"
+
+if st.sidebar.button("🤖 Equipment AI"):
+    st.session_state.page = "ai"
 
 
-# Calculator
-elif menu == "Advanced Calculator":
+# Advanced Calculator
+
+if st.session_state.page == "calc":
+
+    st.header("🧮 Advanced Calculator")
 
     expr = st.text_input("Expression")
 
@@ -54,16 +60,19 @@ elif menu == "Advanced Calculator":
         try:
             st.success(eval(expr))
         except:
-            st.error("Invalid")
+            st.error("Invalid Expression")
 
 
 # Unit Converter
-elif menu == "Unit Converter":
+
+elif st.session_state.page == "unit":
+
+    st.header("📐 Unit Converter")
 
     value = st.number_input("Value")
 
-    from_unit = st.text_input("From","meter")
-    to_unit = st.text_input("To","feet")
+    from_unit = st.text_input("From", "meter")
+    to_unit = st.text_input("To", "feet")
 
     if st.button("Convert"):
 
@@ -71,200 +80,123 @@ elif menu == "Unit Converter":
             result = (value * ureg(from_unit)).to(to_unit)
             st.success(result)
         except:
-            st.error("Error")
+            st.error("Conversion Error")
 
 
 # Industrial Calculators
-elif menu == "Industrial Calculators":
 
-    calc = st.selectbox(
-        "Calculator",
-        [
-            "Pipe Sizing",
-            "Pump Power",
-            "Heat Duty"
-        ]
-    )
+elif st.session_state.page == "industrial":
 
-    if calc == "Pipe Sizing":
+    st.header("🏭 Industrial Calculators")
 
-        flow = st.number_input("Flow")
-        vel = st.number_input("Velocity")
+    flow = st.number_input("Flow")
+    vel = st.number_input("Velocity")
 
-        if st.button("Calculate"):
+    if st.button("Pipe Size"):
 
-            d = (4*flow/(3.14*vel))**0.5
-            st.success(d)
-
-
-# Engineering Database
-elif menu == "Engineering Database":
-
-    df = pd.DataFrame({
-        "Material":["Steel","SS304","Aluminum"],
-        "Density":[7850,8000,2700]
-    })
-
-    st.dataframe(df)
-
-
-# Engineering Standards
-elif menu == "Engineering Standards":
-
-    df = pd.DataFrame({
-        "Standard":["ASME B31.3","API 610","ASTM A106"]
-    })
-
-    st.dataframe(df)
+        d = (4*flow/(3.14*vel))**0.5
+        st.success(f"Diameter {d}")
 
 
 # Plant Builder
-elif menu == "Plant Builder":
+
+elif st.session_state.page == "plant":
 
     st.header("🏭 Plant Builder")
-
-    equipment = st.selectbox(
-        "Add Equipment",
-        [
-            "Pump",
-            "Heat Exchanger",
-            "Tank",
-            "Valve",
-            "Compressor"
-        ]
-    )
 
     if "plant" not in st.session_state:
         st.session_state.plant = []
 
-    if st.button("Add Equipment"):
-        st.session_state.plant.append(equipment)
+    st.subheader("Drag Equipment")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    if col1.button("⚙️ Pump"):
+        st.session_state.plant.append("Pump")
+
+    if col2.button("🔥 Heat Exchanger"):
+        st.session_state.plant.append("Heat Exchanger")
+
+    if col3.button("🛢 Tank"):
+        st.session_state.plant.append("Tank")
+
+    if col4.button("🔧 Valve"):
+        st.session_state.plant.append("Valve")
 
     st.subheader("Plant Layout")
 
-    for i, eq in enumerate(st.session_state.plant):
-        st.write(f"{i+1}. {eq}")
+    for eq in st.session_state.plant:
+        st.write(eq)
 
-    # Auto pipe
-    st.subheader("Auto Pipe Connections")
+    # Pipe drawing
 
-    if st.button("Connect Automatically"):
+    st.subheader("Pipe Drawing")
 
-        for i in range(len(st.session_state.plant)-1):
-            st.write(
-                f"{st.session_state.plant[i]} → {st.session_state.plant[i+1]}"
-            )
+    start = st.text_input("From")
+    end = st.text_input("To")
 
-    # Canvas
-    st.subheader("PFD Canvas")
+    if st.button("Draw Pipe"):
 
-    canvas = st_canvas(
-        fill_color="rgba(0,0,255,0.3)",
-        stroke_width=2,
-        background_color="#fff",
-        height=500,
-        drawing_mode="rect",
-        key="canvas"
-    )
+        st.write(f"{start} → {end}")
 
-    # Plant Simulator
-    st.subheader("Plant Simulator")
+    # PFD Canvas
 
-    flow = st.number_input("Flow")
-    temp = st.number_input("Temperature")
-    pressure = st.number_input("Pressure")
+    st.subheader("PFD Drawing")
 
-    if st.button("Run Simulation"):
+    if canvas_available:
 
-        st.success("Simulation Complete")
+        canvas = st_canvas(
+            fill_color="rgba(0,0,255,0.3)",
+            stroke_width=2,
+            background_color="#fff",
+            height=500,
+            drawing_mode="rect",
+            key="canvas"
+        )
 
-        st.write("Outlet Temp:", temp+5)
-        st.write("Outlet Pressure:", pressure-1)
-
+    else:
+        st.warning("Canvas not available")
 
     # Save Layout
-    st.subheader("Save Plant Layout")
+
+    st.subheader("Save Layout")
 
     name = st.text_input("Layout Name")
 
-    if st.button("Save Layout"):
+    if st.button("Save"):
 
-        os.makedirs("layouts",exist_ok=True)
+        os.makedirs("layouts", exist_ok=True)
 
         with open(f"layouts/{name}.json","w") as f:
-            json.dump(st.session_state.plant,f)
+            json.dump(st.session_state.plant, f)
 
         st.success("Saved")
 
-
-    # Load Layout
-    if st.button("Load Layout"):
-
-        with open(f"layouts/{name}.json") as f:
-            st.session_state.plant = json.load(f)
-
-        st.success("Loaded")
-
-
     # Export PDF
+
     st.subheader("Export PFD PDF")
 
-    if st.button("Export PDF"):
+    if st.button("Export"):
 
         c = canvas.Canvas("PFD.pdf")
 
         y = 750
 
         for eq in st.session_state.plant:
+
             c.drawString(100,y,eq)
             y -= 30
 
         c.save()
 
-        st.success("PFD Exported")
+        st.success("Exported")
 
 
-# Equipment Sizing AI
-elif menu == "Equipment Sizing AI":
+# Doc Converter
 
-    st.header("🤖 Equipment Sizing AI")
+elif st.session_state.page == "doc":
 
-    eq = st.selectbox(
-        "Equipment",
-        [
-            "Pump",
-            "Heat Exchanger",
-            "Tank"
-        ]
-    )
-
-    if eq == "Pump":
-
-        flow = st.number_input("Flow")
-        head = st.number_input("Head")
-        eff = st.number_input("Efficiency",70)
-
-        if st.button("Size"):
-
-            power = (flow*head)/(367*(eff/100))
-
-            st.success(f"Pump Power {power:.2f} kW")
-
-
-    elif eq == "Tank":
-
-        d = st.number_input("Diameter")
-        h = st.number_input("Height")
-
-        if st.button("Size"):
-
-            vol = 3.14*(d/2)**2*h
-
-            st.success(f"Volume {vol:.2f} m3")
-
-
-# PDF Tools
-elif menu == "PDF Tools (iLovePDF Clone)":
+    st.header("📄 Doc Converter & iLovePDF")
 
     tool = st.selectbox(
         "Tool",
@@ -286,24 +218,66 @@ elif menu == "PDF Tools (iLovePDF Clone)":
 
             merger = PdfMerger()
 
-            for file in files:
-                merger.append(file)
+            for f in files:
+                merger.append(f)
 
             merger.write("merged.pdf")
 
             st.success("Merged")
 
+    elif tool == "Split PDF":
 
-# Save Project
-elif menu == "Save Project":
+        file = st.file_uploader("Upload PDF")
 
-    name = st.text_input("Project Name")
+        if st.button("Split"):
 
-    if st.button("Save"):
+            reader = PdfReader(file)
+            writer = PdfWriter()
 
-        os.makedirs("projects",exist_ok=True)
+            writer.add_page(reader.pages[0])
 
-        with open(f"projects/{name}.json","w") as f:
-            json.dump({"project":name},f)
+            with open("split.pdf","wb") as f:
+                writer.write(f)
 
-        st.success("Saved")
+            st.success("Split")
+
+
+# Equipment AI
+
+elif st.session_state.page == "ai":
+
+    st.header("🤖 Equipment Sizing AI")
+
+    eq = st.selectbox(
+        "Equipment",
+        ["Pump","Tank"]
+    )
+
+    if eq == "Pump":
+
+        flow = st.number_input("Flow")
+        head = st.number_input("Head")
+
+        if st.button("Size"):
+
+            power = flow*head/367
+
+            st.success(f"Power {power:.2f} kW")
+
+    elif eq == "Tank":
+
+        d = st.number_input("Diameter")
+        h = st.number_input("Height")
+
+        if st.button("Size"):
+
+            vol = 3.14*(d/2)**2*h
+
+            st.success(f"Volume {vol:.2f} m3")
+
+
+# Footer Dashboard
+
+st.markdown("---")
+
+st.write("⚙️ EngiCore Enterprise | Engineering Platform")
