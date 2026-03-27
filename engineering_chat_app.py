@@ -2,8 +2,12 @@ import streamlit as st
 import sympy as sp
 import pint
 import re
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import wikipedia
 from PyPDF2 import PdfReader
-from streamlit_mic_recorder import mic_recorder
+from reportlab.pdfgen import canvas
 
 # Setup
 ureg = pint.UnitRegistry()
@@ -13,171 +17,145 @@ st.set_page_config(
     layout="wide"
 )
 
-# -------------------------
-# DARK MODE TOGGLE
-# -------------------------
+# -----------------------------
+# HEADER
+# -----------------------------
 
-dark_mode = st.sidebar.toggle("🌙 Dark Mode")
+st.title("🧠 EngiCore Engineering Platform")
+st.markdown("---")
 
-if dark_mode:
-    st.markdown("""
-    <style>
-    body {
-        background-color: #0E1117;
-        color: white;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# -----------------------------
+# MODULE BUTTONS
+# -----------------------------
 
-# -------------------------
-# MULTI LANGUAGE
-# -------------------------
+col1, col2, col3, col4, col5, col6 = st.columns(6)
 
-language = st.sidebar.selectbox(
-    "🌍 Language",
-    ["English", "Hindi"]
-)
+with col1:
+    home = st.button("🏠 Home")
 
-def translate(text):
+with col2:
+    smart = st.button("🧠 Smart Assistant")
 
-    hindi = {
-        "Home":"होम",
-        "Calculator":"कैलकुलेटर",
-        "Converter":"कन्वर्टर",
-        "Engineering Tools":"इंजीनियरिंग टूल्स"
-    }
+with col3:
+    calc = st.button("🧮 Calculator")
 
-    if language == "Hindi":
-        return hindi.get(text,text)
+with col4:
+    convert = st.button("🔄 Converter")
 
-    return text
+with col5:
+    docs = st.button("📄 Docs")
+
+with col6:
+    eng = st.button("⚙️ Engineering")
 
 
-# -------------------------
-# LOGO + BRANDING
-# -------------------------
-
-st.markdown("""
-# 🧠 EngiCore
-### Engineering Super Platform
----
-""")
-
-# -------------------------
-# NAVIGATION
-# -------------------------
-
-menu = st.sidebar.radio(
-    "Navigation",
-    [
-        "🏠 Home",
-        "🧠 Smart Assistant",
-        "🧮 Calculator",
-        "🔄 Converter",
-        "📄 Document Tools",
-        "⚙️ Engineering Tools"
-    ]
-)
-
-# -------------------------
+# -----------------------------
 # HOME
-# -------------------------
+# -----------------------------
 
-if menu == "🏠 Home":
+if home:
 
     st.header("Welcome to EngiCore")
 
-    col1, col2, col3 = st.columns(3)
+    st.write("All in One Engineering Platform")
 
-    with col1:
-        st.success("Smart Assistant")
-
-    with col2:
-        st.success("Calculator")
-
-    with col3:
-        st.success("Converter")
-
-# -------------------------
+# -----------------------------
 # SMART ASSISTANT
-# -------------------------
+# -----------------------------
 
-elif menu == "🧠 Smart Assistant":
+if smart:
 
     st.header("Smart Assistant")
 
     query = st.text_input("Ask anything")
 
-    audio = mic_recorder(
-        start_prompt="🎤 Start",
-        stop_prompt="Stop"
-    )
+    def smart_engine(q):
 
-    if audio:
-        st.info("Voice captured")
-
-    if st.button("Solve"):
-
+        # Math
         try:
-            result = sp.sympify(query)
-            st.success(result)
+            return sp.sympify(q)
         except:
-            st.info("Try math or engineering question")
+            pass
+
+        # Unit conversion
+        try:
+            pattern = r'(\d+\.?\d*)\s*(\w+)\s*(to)\s*(\w+)'
+            match = re.search(pattern, q)
+
+            if match:
+                value = float(match.group(1))
+                from_unit = match.group(2)
+                to_unit = match.group(4)
+
+                return (value * ureg(from_unit)).to(to_unit)
+
+        except:
+            pass
+
+        # Wikipedia
+        try:
+            return wikipedia.summary(q, sentences=2)
+        except:
+            pass
+
+        return "Try math, engineering or unit conversion"
+
+    if st.button("Ask"):
+        result = smart_engine(query)
+        st.success(result)
 
 
-# -------------------------
+# -----------------------------
 # CALCULATOR
-# -------------------------
+# -----------------------------
 
-elif menu == "🧮 Calculator":
+if calc:
 
     st.header("Calculator")
 
     num1 = st.number_input("Number 1")
     num2 = st.number_input("Number 2")
 
-    operation = st.selectbox(
+    op = st.selectbox(
         "Operation",
-        ["Add", "Subtract", "Multiply", "Divide"]
+        ["Add","Subtract","Multiply","Divide"]
     )
 
     if st.button("Calculate"):
 
-        if operation == "Add":
+        if op == "Add":
             st.success(num1 + num2)
 
-        elif operation == "Subtract":
+        elif op == "Subtract":
             st.success(num1 - num2)
 
-        elif operation == "Multiply":
+        elif op == "Multiply":
             st.success(num1 * num2)
 
-        elif operation == "Divide":
+        elif op == "Divide":
             st.success(num1 / num2)
 
-# -------------------------
+# -----------------------------
 # CONVERTER
-# -------------------------
+# -----------------------------
 
-elif menu == "🔄 Converter":
+if convert:
 
     st.header("Converter")
 
-    value = st.number_input("Value", 1.0)
-
-    from_unit = st.text_input("From", "meter")
-    to_unit = st.text_input("To", "kilometer")
+    value = st.number_input("Value",1.0)
+    from_unit = st.text_input("From")
+    to_unit = st.text_input("To")
 
     if st.button("Convert"):
-
         result = (value * ureg(from_unit)).to(to_unit)
         st.success(result)
 
-# -------------------------
+# -----------------------------
 # DOCUMENT
-# -------------------------
+# -----------------------------
 
-elif menu == "📄 Document Tools":
+if docs:
 
     st.header("Document Tools")
 
@@ -187,39 +165,98 @@ elif menu == "📄 Document Tools":
         reader = PdfReader(pdf)
         st.success(f"Pages: {len(reader.pages)}")
 
+# -----------------------------
+# ENGINEERING
+# -----------------------------
 
-# -------------------------
-# ENGINEERING TOOLS
-# -------------------------
-
-elif menu == "⚙️ Engineering Tools":
+if eng:
 
     st.header("Engineering Tools")
 
     tool = st.selectbox(
         "Select Tool",
         [
-            "Tank Volume",
-            "Pipe Velocity",
-            "Pump Power"
+        "Pump Curve",
+        "Pipe Sizing",
+        "Fluid Database",
+        "Plant Simulation",
+        "Engineering Report"
         ]
     )
 
-    if tool == "Tank Volume":
+# Pump Curve
 
-        dia = st.number_input("Diameter")
-        height = st.number_input("Height")
+    if tool == "Pump Curve":
+
+        flow = np.linspace(0,100,50)
+        head = 50 - 0.01*(flow**2)
+
+        fig, ax = plt.subplots()
+        ax.plot(flow,head)
+
+        st.pyplot(fig)
+
+# Pipe Sizing
+
+    elif tool == "Pipe Sizing":
+
+        flow = st.number_input("Flow")
+        velocity = st.number_input("Velocity")
 
         if st.button("Calculate"):
-            volume = 3.14 * (dia/2)**2 * height
-            st.success(volume)
 
-# -------------------------
+            area = flow/(velocity*3600)
+            dia = ((4*area)/3.14)**0.5
+
+            st.success(dia*1000)
+
+# Fluid Database
+
+    elif tool == "Fluid Database":
+
+        fluids = {
+            "Water":{"Density":1000},
+            "Oil":{"Density":850},
+            "Air":{"Density":1.2}
+        }
+
+        fluid = st.selectbox("Fluid",fluids.keys())
+
+        st.write(fluids[fluid])
+
+# Plant Simulation
+
+    elif tool == "Plant Simulation":
+
+        eq = st.multiselect(
+            "Equipment",
+            ["Pump","Tank","Pipe"]
+        )
+
+        for e in eq:
+            st.success(f"{e} added")
+
+# Report
+
+    elif tool == "Engineering Report":
+
+        project = st.text_input("Project")
+
+        if st.button("Generate"):
+
+            c = canvas.Canvas("report.pdf")
+
+            c.drawString(100,750,"EngiCore Report")
+            c.drawString(100,720,project)
+
+            c.save()
+
+            st.success("Report Generated")
+
+
+# -----------------------------
 # FOOTER
-# -------------------------
+# -----------------------------
 
-st.markdown("""
----
-### EngiCore Platform  
-Made for Students • Engineers • Professionals
-""")
+st.markdown("---")
+st.write("EngiCore Engineering Platform")
