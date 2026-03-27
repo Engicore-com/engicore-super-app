@@ -8,91 +8,134 @@ ureg = pint.UnitRegistry()
 
 st.set_page_config(
     page_title="EngiCore Super App",
-    layout="centered"
+    layout="wide"
 )
 
-st.title("🧠 EngiCore Engineering Super App")
+st.title("🧠 EngiCore Super App")
 
-# Chat history
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# Sidebar Menu
+menu = st.sidebar.selectbox(
+    "Select Module",
+    [
+        "Smart Assistant",
+        "Calculator",
+        "Converter",
+        "Document Tools",
+        "Engineering Tools"
+    ]
+)
 
-# Display chat
-for msg in st.session_state.messages:
-    st.chat_message(msg["role"]).write(msg["content"])
+# -----------------------
+# SMART ASSISTANT
+# -----------------------
 
+if menu == "Smart Assistant":
 
-# Smart Math
-def smart_math(query):
-    try:
-        return sp.sympify(query)
-    except:
-        return None
+    st.header("Smart Assistant")
 
+    query = st.text_input("Ask anything")
 
-# Unit Converter
-def smart_convert(text):
-    try:
-        pattern = r'(\d+\.?\d*)\s*([a-zA-Z/°/]+)\s*(to|in)\s*([a-zA-Z/°/]+)'
-        match = re.search(pattern, text)
+    if st.button("Solve"):
 
-        if match:
-            value = float(match.group(1))
-            from_unit = match.group(2)
-            to_unit = match.group(4)
-
-            result = (value * ureg(from_unit)).to(to_unit)
-            return result
-    except:
-        return None
+        try:
+            result = sp.sympify(query)
+            st.success(result)
+        except:
+            st.info("Try math or engineering question")
 
 
-# Engineering Formulas
-def engineering_formula(query):
+# -----------------------
+# CALCULATOR
+# -----------------------
 
-    if "area of circle" in query.lower():
-        return "Area = π r²"
+elif menu == "Calculator":
 
-    if "reynolds" in query.lower():
-        return "Re = ρVD / μ"
+    st.header("Calculator")
 
-    if "velocity" in query.lower():
-        return "Velocity = Flow / Area"
+    num1 = st.number_input("Number 1")
+    num2 = st.number_input("Number 2")
 
-    return None
-
-
-# Smart Engine
-def smart_engine(query):
-
-    math = smart_math(query)
-    if math:
-        return f"Math Result: {math}"
-
-    convert = smart_convert(query)
-    if convert:
-        return f"Conversion: {convert}"
-
-    formula = engineering_formula(query)
-    if formula:
-        return formula
-
-    return "Ask math, unit conversion, or engineering question"
-
-
-# Chat input
-if prompt := st.chat_input("Ask anything..."):
-
-    st.session_state.messages.append(
-        {"role": "user", "content": prompt}
+    operation = st.selectbox(
+        "Operation",
+        ["Add", "Subtract", "Multiply", "Divide"]
     )
 
-    st.chat_message("user").write(prompt)
+    if st.button("Calculate"):
 
-    response = smart_engine(prompt)
+        if operation == "Add":
+            st.success(num1 + num2)
 
-    st.session_state.messages.append(
-        {"role": "assistant", "content": response}
+        elif operation == "Subtract":
+            st.success(num1 - num2)
+
+        elif operation == "Multiply":
+            st.success(num1 * num2)
+
+        elif operation == "Divide":
+            st.success(num1 / num2)
+
+
+# -----------------------
+# CONVERTER
+# -----------------------
+
+elif menu == "Converter":
+
+    st.header("Unit Converter")
+
+    value = st.number_input("Value", 1.0)
+
+    from_unit = st.text_input("From", "meter")
+    to_unit = st.text_input("To", "kilometer")
+
+    if st.button("Convert"):
+
+        result = (value * ureg(from_unit)).to(to_unit)
+        st.success(result)
+
+
+# -----------------------
+# DOCUMENT TOOLS
+# -----------------------
+
+elif menu == "Document Tools":
+
+    st.header("Document Tools")
+
+    st.info("PDF tools coming next update")
+
+
+# -----------------------
+# ENGINEERING TOOLS
+# -----------------------
+
+elif menu == "Engineering Tools":
+
+    st.header("Engineering Tools")
+
+    tool = st.selectbox(
+        "Select Tool",
+        [
+            "Tank Volume",
+            "Pipe Velocity"
+        ]
     )
 
-    st.chat_message("assistant").write(response)
+    if tool == "Tank Volume":
+
+        dia = st.number_input("Diameter (m)")
+        height = st.number_input("Height (m)")
+
+        if st.button("Calculate Volume"):
+            volume = 3.14 * (dia/2)**2 * height
+            st.success(volume)
+
+    elif tool == "Pipe Velocity":
+
+        flow = st.number_input("Flow (m3/hr)")
+        dia = st.number_input("Diameter (mm)")
+
+        if st.button("Calculate Velocity"):
+
+            velocity = flow/(3.14*(dia/1000)**2/4)/3600
+            st.success(velocity)
